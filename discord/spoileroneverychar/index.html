@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spoiler tag on every character</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            color: white;
+            background-color: #36393f;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+
+
+        #app {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .inputDescription {
+            margin-bottom: 0.3em;
+        }
+
+        textarea {
+            width: 50%;
+            height: 25%;
+            background-color: #23272a;
+            border-color: #36393f;
+            color: #fff;
+            min-width: 10em;
+            min-height: 3em;
+            max-height: 100%;
+            max-width: 100%;
+        }
+
+        #warnExceeds2000Chars {
+            opacity: 0;
+            color: #fff;
+            transition: opacity 0.5s ease;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+        #warnExceeds2000Chars.visible {
+            opacity: 1;
+        }
+
+        button {
+            background-color: #7289da;
+            border: none;
+            border-radius: 0.5em;
+            min-width: 5em;
+            min-height: 3em;
+            font-size: 1em;
+            color: #fff;
+            transition: background-color 0.2s ease;
+        }
+        button:hover {
+            background-color: #657abf;
+            cursor: pointer;
+        }
+    </style>
+
+    <script>
+        document.onreadystatechange = function () {
+            if (document.readyState === "complete")
+                init();
+
+        };
+
+        function init() {
+
+            let spoilerInputElement = document.getElementById("spoilerInput");
+            let spoilerOutputElement = document.getElementById("spoilerOutput");
+            let warnExceeds2000CharsElement = document.getElementById("warnExceeds2000Chars");
+            let copyButtonElement = document.getElementById("copyButton");
+
+            spoilerInputElement.oninput = function () {
+
+                let input = spoilerInputElement.value;
+                let output = "";
+
+                for (let char of input) {
+
+                    if (char === "\n")
+                        output += "\n";
+                    else
+                        output += "||" + char + "||";
+
+                }
+
+                spoilerOutputElement.value = output;
+                if (output.length > 2000) {
+                    warnExceeds2000CharsElement.classList.add("visible");
+                } else {
+                    warnExceeds2000CharsElement.classList.remove("visible");
+                }
+
+            };
+
+            function flashCopyButton(color) {
+
+                copyButtonElement.style.backgroundColor = color;
+
+                setTimeout(function() {
+                    copyButtonElement.style.backgroundColor = null;
+                }, 800)
+
+            }
+
+            copyButtonElement.onclick = function () {
+
+                navigator.clipboard.writeText(spoilerOutputElement.value).then(function() {
+                    flashCopyButton("#47b347");
+
+                }).catch(function() {
+                    flashCopyButton("#d97373")
+                });
+
+            };
+
+        }
+
+
+    </script>
+</head>
+<body>
+<div id="app">
+    <h1>Spoiler tag on every character</h1>
+    <span class="inputDescription">Insert text to convert to spoilers:</span>
+    <textarea id="spoilerInput"></textarea>
+    <span class="inputDescription">Output:</span>
+    <textarea id="spoilerOutput" readonly></textarea>
+    <span id="warnExceeds2000Chars">This exceeds Discord's 2000 characters limit!</span>
+    <button id="copyButton">Copy result to clipboard</button>
+</div>
+
+</body>
+</html>
