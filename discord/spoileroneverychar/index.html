@@ -37,14 +37,42 @@
             color: #fff;
             min-width: 10em;
             min-height: 3em;
-            max-height: 100%;
-            max-width: 100%;
+            resize: none;
+        }
+
+        .textAreaWithMaxLength {
+            position: relative;
+            width: 50%;
+            height: 25%;
+        }
+        .textAreaWithMaxLength > textarea {
+            width: 100%;
+            height: 100%;
+        }
+
+
+        #maxLength {
+            position: absolute;
+            bottom: 0.1em;
+            right: 0.75em;
+            text-align: right;
+            background-color: rgba(35,39,42,.5);
+            transition: background-color .5s ease, color .5s ease;
+            min-width: 3em;
+        }
+        #maxLength.exceeded {
+            color: #d97373;
+            background-color: rgba(35,39,42,.95)
+        }
+
+        .mono {
+            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         }
 
         #warnExceeds2000Chars {
             opacity: 0;
             color: #fff;
-            transition: opacity 0.5s ease;
+            transition: opacity .5s ease;
             margin-top: 5px;
             margin-bottom: 5px;
         }
@@ -82,6 +110,9 @@
             let spoilerOutputElement = document.getElementById("spoilerOutput");
             let warnExceeds2000CharsElement = document.getElementById("warnExceeds2000Chars");
             let copyButtonElement = document.getElementById("copyButton");
+            let maxLengthElement = document.getElementById("maxLength");
+
+
 
             spoilerInputElement.oninput = function () {
 
@@ -98,34 +129,45 @@
                 }
 
                 spoilerOutputElement.value = output;
+                maxLengthElement.innerHTML = (2000 - output.length).toString();
                 if (output.length > 2000) {
                     warnExceeds2000CharsElement.classList.add("visible");
+                    maxLengthElement.classList.add("exceeded");
                 } else {
                     warnExceeds2000CharsElement.classList.remove("visible");
+                    maxLengthElement.classList.remove("exceeded");
                 }
 
             };
 
+            let flashCopyButtonTimeout;
+
             function flashCopyButton(color) {
 
                 copyButtonElement.style.backgroundColor = color;
-
-                setTimeout(function() {
+                clearTimeout(flashCopyButtonTimeout);
+                flashCopyButtonTimeout = setTimeout(function() {
                     copyButtonElement.style.backgroundColor = null;
-                }, 800)
+                }, 800);
 
             }
 
             copyButtonElement.onclick = function () {
 
-                navigator.clipboard.writeText(spoilerOutputElement.value).then(function() {
-                    flashCopyButton("#47b347");
+                spoilerOutputElement.focus();
+                spoilerOutputElement.select();
 
-                }).catch(function() {
+                try {
+                    if(document.execCommand('copy'))
+                        flashCopyButton("#47b347");
+                    else throw "Error copying";
+
+                } catch {
                     flashCopyButton("#d97373")
-                });
+                }
 
             };
+
 
         }
 
@@ -138,7 +180,11 @@
     <span class="inputDescription">Insert text to convert to spoilers:</span>
     <textarea id="spoilerInput"></textarea>
     <span class="inputDescription">Output:</span>
-    <textarea id="spoilerOutput" readonly></textarea>
+    <div class="textAreaWithMaxLength">
+        <textarea id="spoilerOutput" class="mono" readonly></textarea>
+        <a id="maxLength" class="mono">2000</a>
+    </div>
+
     <span id="warnExceeds2000Chars">This exceeds Discord's 2000 characters limit!</span>
     <button id="copyButton">Copy result to clipboard</button>
 </div>
