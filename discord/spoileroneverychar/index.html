@@ -25,36 +25,46 @@
             text-align: center;
         }
 
+
         .inputDescription {
             margin-bottom: 0.3em;
         }
 
         textarea {
             width: 50%;
-            height: 25%;
+            height: 35%;
             background-color: #23272a;
             border-color: #36393f;
             color: #fff;
-            min-width: 10em;
-            min-height: 3em;
+            min-width: 20em;
+            min-height: 5em;
             resize: none;
+            font-size: 13px;
+            border-width: 1px;
         }
+
 
         .textAreaWithMaxLength {
             position: relative;
             width: 50%;
-            height: 25%;
+            height: 35%;
+            font-size: 13px;
+            min-width: 20em;
+            min-height: 5em;
+            
         }
         .textAreaWithMaxLength > textarea {
             width: 100%;
             height: 100%;
+            position: absolute;
+            left: -3px;
         }
 
 
         #maxLength {
             position: absolute;
-            bottom: 0.1em;
-            right: 0.75em;
+            bottom: .1em;
+            right: .75em;
             text-align: right;
             background-color: rgba(35,39,42,.5);
             transition: background-color .5s ease, color .5s ease;
@@ -63,10 +73,6 @@
         #maxLength.exceeded {
             color: #d97373;
             background-color: rgba(35,39,42,.95)
-        }
-
-        .mono {
-            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         }
 
         #warnExceeds2000Chars {
@@ -81,19 +87,29 @@
             opacity: 1;
         }
 
+        .mono {
+            font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+
+
         button {
             background-color: #7289da;
             border: none;
-            border-radius: 0.5em;
+            border-radius: .5em;
             min-width: 5em;
             min-height: 3em;
             font-size: 1em;
             color: #fff;
-            transition: background-color 0.2s ease;
+            transition: background-color .2s ease, opacity .5s ease;
         }
         button:hover {
             background-color: #657abf;
             cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
     </style>
 
@@ -112,10 +128,14 @@
             let copyButtonElement = document.getElementById("copyButton");
             let maxLengthElement = document.getElementById("maxLength");
 
+            const charLimit = 2000;
 
 
-            spoilerInputElement.oninput = function () {
 
+            spoilerInputElement.oninput = parseInput;
+            spoilerOutputElement.oninput = parseInput;
+
+            function parseInput() {
                 let input = spoilerInputElement.value;
                 let output = "";
 
@@ -129,8 +149,8 @@
                 }
 
                 spoilerOutputElement.value = output;
-                maxLengthElement.innerHTML = (2000 - output.length).toString();
-                if (output.length > 2000) {
+                maxLengthElement.innerHTML = (charLimit - output.length).toString();
+                if (output.length > charLimit) {
                     warnExceeds2000CharsElement.classList.add("visible");
                     maxLengthElement.classList.add("exceeded");
                 } else {
@@ -138,34 +158,52 @@
                     maxLengthElement.classList.remove("exceeded");
                 }
 
-            };
+                copyButtonElement.disabled = output.length === 0;
+            }
+
+
 
             let flashCopyButtonTimeout;
 
             function flashCopyButton(color) {
-
                 copyButtonElement.style.backgroundColor = color;
                 clearTimeout(flashCopyButtonTimeout);
+
                 flashCopyButtonTimeout = setTimeout(function() {
                     copyButtonElement.style.backgroundColor = null;
                 }, 800);
-
             }
+
+            let copySuccess = "#47b347";
+            let copyFailed = "#d97373";
 
             copyButtonElement.onclick = function () {
 
                 spoilerOutputElement.focus();
                 spoilerOutputElement.select();
 
+                let success = false;
                 try {
                     if(document.execCommand('copy'))
-                        flashCopyButton("#47b347");
-                    else throw "Error copying";
+                        success = true;
+                    else {
+                        // Method for copying for iOS devices
+                        // https://stackoverflow.com/questions/34045777/copy-to-clipboard-using-javascript-in-ios
+                        let range = document.createRange();
+                        range.selectNodeContents(spoilerOutputElement);
+                        let s = window.getSelection();
+                        s.removeAllRanges();
+                        s.addRange(range);
+                        spoilerOutputElement.setSelectionRange(0, spoilerOutputElement.value.length);
+                        if(document.execCommand('copy'))
+                            success = true;
+                    }
+                } catch {}
 
-                } catch {
-                    flashCopyButton("#d97373")
-                }
-
+                if(success)
+                    flashCopyButton(copySuccess);
+                else
+                    flashCopyButton(copyFailed);
             };
 
 
@@ -181,12 +219,12 @@
     <textarea id="spoilerInput"></textarea>
     <span class="inputDescription">Output:</span>
     <div class="textAreaWithMaxLength">
-        <textarea id="spoilerOutput" class="mono" readonly></textarea>
+        <textarea id="spoilerOutput" class="mono" contenteditable="true"></textarea>
         <a id="maxLength" class="mono">2000</a>
     </div>
 
     <span id="warnExceeds2000Chars">This exceeds Discord's 2000 characters limit!</span>
-    <button id="copyButton">Copy result to clipboard</button>
+    <button id="copyButton" disabled>Copy result to clipboard</button>
 </div>
 
 </body>
